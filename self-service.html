@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Self-Service Assistant</title>
+<link rel="icon" href="assets/favicon.png">
+<style>
+@font-face{font-family:"Bull Heavy";src:url("fonts/Bull-Heavy1.otf") format("opentype");font-weight:700}
+@font-face{font-family:"Bull";src:url("fonts/Bull-Regular.otf") format("opentype");font-weight:400}
+@font-face{font-family:"BullText";src:url("fonts/BullText-Regular.ttf") format("truetype");font-weight:400}
+@font-face{font-family:"BullText";src:url("fonts/BullText-Medium.ttf") format("truetype");font-weight:500}
+@font-face{font-family:"BullText";src:url("fonts/BullText-Bold.ttf") format("truetype");font-weight:700}
+
+:root{
+  --navy:#011235; --navy-2:#050d32; --navy-3:#0d2043; --navy-4:#1a2b55;
+  --red:#db0a40; --red-dark:#b00934; --gold:#fab807; --orange:#f19000;
+  --bg:#f3f4f7; --card:#fff; --text:#001136; --muted:#677089; --line:#e3e6ee;
+  --green:#14a05c; --amber:#e8930c; --wa:#25d366; --wa-dark:#075e54;
+  --head:"Bull Heavy","BullText",system-ui,sans-serif;
+  --body:"BullText",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--body);background:var(--bg);color:var(--text);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+h1,h2,h3{font-family:var(--head);font-weight:700;letter-spacing:.2px;margin:0}
+a{color:inherit}
+
+/* ---------- top bar ---------- */
+.topbar{position:sticky;top:0;z-index:1000;background:var(--navy);color:#fff;display:flex;align-items:center;gap:24px;padding:0 28px;height:68px;box-shadow:0 2px 12px rgba(0,0,0,.25)}
+.topbar img{height:18px}
+.topbar .tag{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);border:1px solid rgba(250,184,7,.5);padding:3px 8px;border-radius:20px;white-space:nowrap}
+.tabs{display:flex;gap:4px;margin-left:auto;overflow-x:auto}
+.tabs button{background:none;border:0;color:#c9cfe0;font-size:14px;padding:10px 14px;border-radius:8px;white-space:nowrap;font-weight:500}
+.tabs button:hover{color:#fff;background:rgba(255,255,255,.06)}
+.tabs button.active{color:#fff;background:var(--red)}
+.view{display:none;padding:28px;max-width:1380px;margin:0 auto}
+.view.active{display:block;animation:fade .3s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.card{background:var(--card);border-radius:16px;box-shadow:0 1px 3px rgba(1,18,53,.06),0 6px 24px rgba(1,18,53,.05);padding:22px}
+.eyebrow{font-size:12px;letter-spacing:1.6px;text-transform:uppercase;color:var(--red);font-weight:700}
+.muted{color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px}
+.pill.green{background:#e3f6ec;color:var(--green)} .pill.amber{background:#fff2dc;color:#b86e00} .pill.red{background:#fde4eb;color:var(--red)} .pill.navy{background:#e7eaf3;color:var(--navy)}
+.btn{border:0;border-radius:10px;padding:10px 16px;font-weight:700;font-size:14px;background:var(--red);color:#fff;transition:.15s}
+.btn:hover{background:var(--red-dark)}
+.btn.ghost{background:transparent;color:var(--navy);border:1.5px solid var(--line)}
+.btn.ghost:hover{border-color:var(--navy)}
+.btn.small{padding:6px 12px;font-size:13px;border-radius:8px}
+.btn.navy{background:var(--navy)} .btn.navy:hover{background:var(--navy-4)}
+.btn:disabled{opacity:.5;cursor:default}
+.sample-note{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.sample-note::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--gold)}
+
+/* ---------- customer agent ---------- */
+.cust{display:grid;grid-template-columns:300px 400px 1fr;gap:24px;align-items:start}
+.scenarios h3{font-size:18px;margin-bottom:4px}
+.scn{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px;transition:.15s;color:var(--text)}
+.scn:hover{border-color:var(--navy)}
+.scn.active{border-color:var(--red);box-shadow:0 0 0 3px rgba(219,10,64,.12)}
+.scn .ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:none;font-size:17px;background:#f0f2f8}
+.scn b{display:block;font-size:14px}
+.scn small{color:var(--muted);font-size:12px;line-height:1.3;display:block;margin-top:2px}
+.scn .ch{font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--red);font-weight:700}
+
+.phone{width:390px;height:780px;border-radius:52px;background:#0b0b10;padding:13px;box-shadow:0 30px 60px rgba(1,18,53,.25),inset 0 0 0 2px #2a2a33;position:relative;margin:0 auto}
+.screen{position:relative;width:100%;height:100%;border-radius:40px;overflow:hidden;background:#f4f5f9;display:flex;flex-direction:column}
+.island{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:112px;height:32px;background:#000;border-radius:20px;z-index:30}
+.statusbar{height:50px;display:flex;justify-content:space-between;align-items:flex-end;padding:0 30px 6px;font-size:14px;font-weight:700;color:#fff;background:var(--navy);flex:none}
+.statusbar .sig{letter-spacing:1px;font-size:11px}
+.chathead{background:var(--navy);color:#fff;padding:10px 16px 12px;display:flex;align-items:center;gap:10px;flex:none}
+.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--red-dark));display:grid;place-items:center;font-family:var(--head);font-size:13px;flex:none;color:#fff;border:2px solid rgba(255,255,255,.15)}
+.chathead b{font-size:15px;display:block}
+.chathead small{font-size:11.5px;color:#9fe2b9;display:flex;align-items:center;gap:5px}
+.chathead small::before{content:"";width:7px;height:7px;border-radius:50%;background:#3ddc84}
+.chathead .chan{margin-left:auto;font-size:10px;letter-spacing:1px;text-transform:uppercase;border:1px solid rgba(255,255,255,.3);border-radius:10px;padding:2px 8px;color:#dfe3ef}
+.feed{flex:1;overflow-y:auto;padding:14px 12px 8px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth}
+.feed::-webkit-scrollbar{width:0}
+.msg{max-width:84%;padding:9px 12px;border-radius:16px;font-size:14px;line-height:1.4;animation:pop .25s ease;word-wrap:break-word}
+@keyframes pop{from{opacity:0;transform:translateY(6px) scale(.98)}to{opacity:1;transform:none}}
+.msg.bot{background:#fff;align-self:flex-start;border-bottom-left-radius:4px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.msg.user{background:var(--navy);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.msg.sys{align-self:center;background:transparent;color:var(--muted);font-size:11.5px;text-align:center;max-width:95%;padding:2px 8px}
+.msg.sys .ctx{display:inline-flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-top:4px}
+.msg.sys .ctx span{background:#e7eaf3;color:var(--navy);border-radius:8px;padding:2px 7px;font-size:11px}
+.msg.wide{max-width:94%;padding:0;background:transparent;box-shadow:none}
+.typing{align-self:flex-start;background:#fff;border-radius:16px;padding:12px 14px;display:flex;gap:4px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.typing i{width:7px;height:7px;border-radius:50%;background:#a9b0c2;animation:blink 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes blink{0%,80%,100%{opacity:.3}40%{opacity:1}}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;padding:2px 0 4px;animation:pop .25s ease}
+.chips button{background:#fff;border:1.5px solid var(--red);color:var(--red);border-radius:18px;padding:7px 12px;font-size:13px;font-weight:700}
+.chips button:hover{background:var(--red);color:#fff}
+.chips button.primary{background:var(--red);color:#fff}
+.inputbar{display:flex;gap:8px;padding:10px 12px 22px;background:#fff;border-top:1px solid var(--line);flex:none}
+.inputbar input{flex:1;border:1.5px solid var(--line);border-radius:22px;padding:10px 14px;font-size:14px;font-family:inherit;outline:none}
+.inputbar input:focus{border-color:var(--navy)}
+.inputbar button{width:42px;height:42px;border-radius:50%;border:0;background:var(--red);color:#fff;font-size:17px;flex:none}
+
+/* rich cards inside chat */
+.rc{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08);font-size:13.5px}
+.rc .rh{background:var(--navy);color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.rc .rh b{font-family:var(--head);font-size:14px;letter-spacing:.3px}
+.rc .rb{padding:12px 14px}
+.rc .kv{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px dashed var(--line)}
+.rc .kv b{text-align:right;white-space:nowrap}
+.rc .kv:last-child{border:0}
+.rc .kv span{color:var(--muted)}
+.bar{height:10px;border-radius:6px;background:#eceef4;overflow:hidden;margin:8px 0 4px}
+.bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--gold),var(--red));transition:width 1s ease}
+.hist{display:flex;gap:6px;align-items:flex-end;height:64px;margin-top:14px}
+.hist div{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;color:var(--muted)}
+.hist div i{width:100%;background:#f6c2d1;border-radius:4px 4px 0 0}
+.hist div.hot i{background:var(--red)}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cmp > div{border:1.5px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.cmp > div.rec{border-color:var(--red);background:#fff6f8;position:relative}
+.cmp > div.rec::before{content:"BEST FIT";position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;font-size:9.5px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:8px}
+.cmp .gb{font-family:var(--head);font-size:26px;color:var(--navy);line-height:1.1}
+.cmp .pr{font-weight:700;color:var(--red)}
+.cmp small{display:block;color:var(--muted);font-size:11px}
+.why{margin:10px 0 0;padding:0;list-style:none}
+.why li{padding:3px 0 3px 20px;position:relative;font-size:13px}
+.why li::before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:700}
+.success{text-align:center;padding:16px 14px}
+.success .tick{width:52px;height:52px;border-radius:50%;background:#e3f6ec;color:var(--green);display:grid;place-items:center;font-size:26px;margin:0 auto 8px;animation:pop .4s ease}
+.success b{font-family:var(--head);font-size:16px;display:block}
+.storecard{display:flex;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);align-items:center}
+.storecard:last-child{border:0}
+.storecard .dist{font-family:var(--head);color:var(--navy);font-size:15px;min-width:52px;text-align:center}
+.storecard .dist small{display:block;font-family:var(--body);font-size:10px;color:var(--muted)}
+.storecard a{margin-left:auto;font-size:12px;font-weight:700;color:var(--red);text-decoration:none;white-space:nowrap}
+.qr{display:block;margin:6px auto;width:150px;height:150px}
+.otp{display:flex;gap:6px;justify-content:center;margin:6px 0}
+.otp span{width:34px;height:40px;border:1.5px solid var(--line);border-radius:8px;display:grid;place-items:center;font-family:var(--head);font-size:18px}
+
+/* lock screen + notification */
+.lock{position:absolute;inset:0;z-index:20;background:radial-gradient(400px 400px at 20% 10%,rgba(219,10,64,.55),transparent 60%),radial-gradient(400px 400px at 90% 90%,rgba(250,184,7,.25),transparent 60%),linear-gradient(160deg,#0d2043,#050d32);color:#fff;display:none;flex-direction:column;align-items:center;padding-top:80px}
+.lock.show{display:flex}
+.lock .time{font-family:var(--head);font-size:76px;line-height:1;font-weight:700}
+.lock .date{font-size:16px;opacity:.85;margin-top:4px}
+.notif{margin-top:40px;width:88%;background:rgba(255,255,255,.88);backdrop-filter:blur(10px);color:#111;border-radius:20px;padding:12px 14px;cursor:pointer;transform:translateY(-30px);opacity:0;transition:.5s cubic-bezier(.2,.9,.3,1.2)}
+.notif.in{transform:none;opacity:1}
+.notif .nh{display:flex;align-items:center;gap:8px;font-size:12px;color:#555;text-transform:uppercase;letter-spacing:.4px}
+.notif .nh .appi{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:12px;color:#fff;background:var(--navy)}
+.notif .nh .appi.wa{background:var(--wa)}
+.notif .nh time{margin-left:auto;text-transform:none}
+.notif b{display:block;margin-top:6px;font-size:14.5px}
+.notif p{margin:2px 0 0;font-size:14px;line-height:1.35;color:#222}
+.tapme{margin-top:18px;font-size:13px;opacity:.7;animation:blink 1.6s infinite}
+
+/* whatsapp skin */
+.phone.wa .statusbar,.phone.wa .chathead{background:var(--wa-dark)}
+.phone.wa .screen{background:#ece5dd}
+.phone.wa .msg.user{background:#dcf8c6;color:#111}
+.phone.wa .chips button{border-color:var(--wa-dark);color:var(--wa-dark)}
+.phone.wa .chips button:hover,.phone.wa .chips button.primary{background:var(--wa-dark);color:#fff}
+.phone.wa .inputbar button{background:var(--wa-dark)}
+.phone.wa .avatar{background:var(--navy)}
+/* web skin */
+.phone.web .statusbar{background:#fff;color:#111}
+.phone.web .urlbar{display:flex}
+.urlbar{display:none;background:#fff;padding:4px 14px 8px;flex:none}
+.urlbar div{flex:1;background:#eef0f4;border-radius:10px;padding:6px 12px;font-size:12.5px;color:#444;text-align:center}
+
+/* insight panel */
+.insight h3{font-size:22px;margin:4px 0 6px}
+.insight .trigger{font-size:14px;color:#2b3c5b;background:#f6f7fb;border-left:3px solid var(--red);padding:10px 12px;border-radius:0 10px 10px 0;margin:12px 0}
+.steps{list-style:none;padding:0;margin:14px 0 0;counter-reset:s}
+.steps li{position:relative;padding:8px 0 8px 38px;font-size:14px;color:#9aa1b4;transition:.3s;counter-increment:s}
+.steps li::before{content:counter(s);position:absolute;left:0;top:6px;width:24px;height:24px;border-radius:50%;border:1.5px solid #d6dae5;display:grid;place-items:center;font-size:12px;font-weight:700}
+.steps li.on{color:var(--text)}
+.steps li.on::before{background:var(--red);border-color:var(--red);color:#fff}
+.steps li.done{color:var(--text)}
+.steps li.done::before{content:"✓";background:var(--green);border-color:var(--green);color:#fff}
+.bigmetric{display:flex;gap:14px;align-items:center;margin-top:16px;background:linear-gradient(135deg,var(--navy),var(--navy-3));color:#fff;border-radius:14px;padding:16px 18px}
+.bigmetric b{font-family:var(--head);font-size:34px;color:var(--gold);white-space:nowrap}
+.bigmetric span{font-size:13.5px;color:#d6dbea}
+.bigmetric small{display:block;color:#8e97b3;font-size:11.5px;margin-top:4px}
+.datachips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.datachips span{font-size:12px;background:#eef0f6;color:var(--navy);padding:4px 10px;border-radius:14px}
+.channelswitch{display:flex;background:#e7eaf3;border-radius:10px;padding:3px;margin-top:14px}
+.channelswitch button{flex:1;border:0;background:transparent;padding:7px;border-radius:8px;font-size:12.5px;font-weight:700;color:var(--muted)}
+.channelswitch button.on{background:#fff;color:var(--navy);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);opacity:0;transition:.3s;z-index:2000;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%)}
+
+/* ---------- page layout ---------- */
+.wrap{max-width:1380px;margin:0 auto;padding:28px}
+.cols{display:grid;grid-template-columns:300px 400px 1fr;gap:24px;align-items:start}
+.side h3{font-size:18px;margin:6px 0 4px}
+.ask{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.ask button{text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-size:13.5px;color:var(--text);transition:.15s}
+.ask button:hover{border-color:var(--red);color:var(--red)}
+.sigfield{margin-top:12px}
+.sigfield label{display:block;font-size:12px;font-weight:700;color:var(--navy);margin-bottom:5px}
+.sigfield select{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:9px 10px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--text)}
+.stockrow{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.stockrow:last-child{border:0}
+.stockrow div{flex:1;min-width:0}
+.stockrow small{display:block;color:var(--muted);font-size:11.5px}
+.stockrow button{border:1.5px solid var(--line);background:#fff;border-radius:8px;width:28px;height:28px;font-weight:700;color:var(--navy)}
+.stockrow button:hover{border-color:var(--red);color:var(--red)}
+.stockrow b{min-width:26px;text-align:center;font-family:var(--head)}
+.restart{margin-left:auto}
+.insight .channelswitch{display:none}
+@media (max-width:1200px){.cols{grid-template-columns:1fr 400px}.cols .insight{grid-column:1/-1}}
+@media (max-width:900px){.wrap{padding:16px}.cols{grid-template-columns:1fr}.topbar .tag{display:none}.phone{transform:scale(.9);transform-origin:top center}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <img src="assets/logo.svg" alt="Red Bull Mobile">
+  <span class="tag">Self-Service Assistant · Prototype</span>
+  <button class="btn small restart" id="restart">↻ Restart demo</button>
+</header>
+
+<main class="wrap">
+  <div class="cols">
+    <div class="side">
+      <div class="card">
+        <div class="eyebrow">Free text, English or Arabic</div>
+        <h3>Try saying</h3>
+        <p class="muted" style="font-size:13px;margin:0">Click one to send it, or type your own in the phone.</p>
+        <div class="ask" id="ask"></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="eyebrow">Demo customer</div>
+        <div class="rc" style="box-shadow:none;margin-top:8px"><div class="rb" style="padding:0">
+          <div class="kv"><span>Number</span><b>+968 7912 3456</b></div>
+          <div class="kv"><span>Plan</span><b id="d-plan"></b></div>
+          <div class="kv"><span>Balance</span><b id="d-bal"></b></div>
+          <div class="kv"><span>Data used</span><b>46.3 GB</b></div>
+          <div class="kv"><span>Renews</span><b>24 Oct</b></div>
+        </div></div>
+        <p class="muted" style="font-size:12px;margin:10px 0 0">Updates live as the chat recharges or changes the plan.</p>
+      </div></div>
+
+    <div>
+      <div class="phone " id="phone">
+        <div class="screen">
+          <div class="island"></div>
+          <div class="statusbar"><span>19:40</span><span class="sig">●●●● 5G ▮</span></div>
+          <div class="urlbar"><div>🔒 Red Bull Mobile app</div></div>
+          <div class="chathead">
+            <div class="avatar">RB</div>
+            <div><b>Red Bull Mobile Assistant</b><small>AI agent · online</small></div>
+            <span class="chan" id="chanlabel">App</span>
+          </div>
+          <div class="feed" id="feed"></div>
+          <form class="inputbar" id="inputbar" autocomplete="off">
+            <input id="chatinput" placeholder="Type a message…">
+            <button type="submit" aria-label="Send">➤</button>
+          </form>
+          <div class="lock" id="lock"><div class="notif" id="notif"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card insight" id="insight"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const ro = (n, d = 3) => 'RO ' + Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const roK = n => 'RO ' + (n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'k' : Math.round(n));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+function seeded(seed) { return () => (seed = (seed * 16807) % 2147483647) / 2147483647; }
+
+const PLANS = [
+  { gb: 46, price: 16 }, { gb: 52, price: 18 }, { gb: 58, price: 20 }, { gb: 80, price: 22 }
+];
+const CUSTOMER = {
+  msisdn: '+968 7912 3456', plan: PLANS[1], used: 46.3, balance: 0.45,
+  renew: '24 Oct', daysLeft: 3, area: 'Al Khoud, Seeb', lat: 23.5880, lng: 58.1700, tenure: '2 yrs 4 mo'
+};
+
+const feed = $('#feed'), phone = $('#phone');
+const CANCEL = Symbol('cancel');
+let session = 0;
+
+function scrollFeed(f = feed) { requestAnimationFrame(() => { f.scrollTop = f.scrollHeight; }); }
+function addMsg(who, html, extra = '', f = feed) {
+  const d = document.createElement('div');
+  d.className = `msg ${who} ${extra}`; d.innerHTML = html;
+  f.appendChild(d); scrollFeed(f); return d;
+}
+async function bot(html, delay = 750, extra = '') {
+  const s = session;
+  const t = document.createElement('div'); t.className = 'typing'; t.innerHTML = '<i></i><i></i><i></i>';
+  feed.appendChild(t); scrollFeed();
+  await sleep(delay);
+  t.remove();
+  if (s !== session) throw CANCEL;
+  return addMsg('bot', html, extra);
+}
+const card = (html, delay = 600) => bot(html, delay, 'wide');
+function sys(html) { return addMsg('sys', html); }
+function user(text) { return addMsg('user', esc(text)); }
+
+/* chips: [{label, fn, primary}] — clicking echoes the label as a user message */
+function chips(list) {
+  const s = session;
+  const w = document.createElement('div'); w.className = 'chips';
+  list.forEach(c => {
+    const b = document.createElement('button'); b.textContent = c.label;
+    if (c.primary) b.classList.add('primary');
+    b.onclick = () => { if (s !== session) return; w.remove(); user(c.label); run(c.fn); };
+    w.appendChild(b);
+  });
+  feed.appendChild(w); scrollFeed(); return w;
+}
+function run(fn, ...args) { Promise.resolve().then(() => fn(...args)).catch(e => { if (e !== CANCEL) console.error(e); }); }
+
+function setChannel(ch) {
+  phone.classList.remove('wa', 'web');
+  if (ch === 'wa') phone.classList.add('wa');
+  if (ch === 'web') phone.classList.add('web');
+  $('#chanlabel').textContent = { wa: 'WhatsApp', web: 'Web', app: 'App' }[ch];
+  $$('.channelswitch button').forEach(b => b.classList.toggle('on', b.dataset.ch === ch));
+}
+function resetPhone(ch = 'app') {
+  session++;
+  feed.innerHTML = '';
+  $('#lock').classList.remove('show');
+  setChannel(ch);
+}
+
+/* lock-screen notification, resolves on tap */
+function notify({ wa = false, app, title, body }) {
+  const s = session;
+  const lock = $('#lock'), n = $('#notif');
+  n.classList.remove('in');
+  n.innerHTML = `<div class="nh"><span class="appi ${wa ? 'wa' : ''}">${wa ? '✆' : 'RB'}</span>${esc(app)}<time>now</time></div><b>${esc(title)}</b><p>${esc(body)}</p>`;
+  lock.classList.add('show');
+  setTimeout(() => n.classList.add('in'), 500);
+  return new Promise((res, rej) => {
+    n.onclick = () => { lock.classList.remove('show'); s === session ? res() : rej(CANCEL); };
+  });
+}
+
+/* ---------- insight panel ---------- */
+let currentSteps = [];
+function setInsight({ eyebrow, title, trigger, steps, metric, data }) {
+  currentSteps = steps;
+  $('#insight').innerHTML = `
+    <div class="eyebrow">${eyebrow}</div>
+    <h3>${title}</h3>
+    <div class="trigger"><b>Trigger:</b> ${trigger}</div>
+    <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">What the agent is doing</div>
+    <ol class="steps">${steps.map(s => `<li>${s}</li>`).join('')}</ol>
+    <div class="bigmetric"><b>${metric.value}</b><span>${metric.label}<small>${metric.source}</small></span></div>
+    <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:16px">Data it uses (already exists today)</div>
+    <div class="datachips">${data.map(d => `<span>${d}</span>`).join('')}</div>
+    <div class="channelswitch">
+      <button data-ch="app">App</button><button data-ch="wa">WhatsApp</button><button data-ch="web">Website</button>
+    </div>`;
+  $$('#insight .channelswitch button').forEach(b => b.onclick = () => setChannel(b.dataset.ch));
+  setChannel($('#chanlabel').textContent === 'WhatsApp' ? 'wa' : $('#chanlabel').textContent === 'Web' ? 'web' : 'app');
+}
+function step(i) {
+  $$('#insight .steps li').forEach((li, k) => {
+    li.classList.toggle('done', k < i);
+    li.classList.toggle('on', k === i);
+  });
+}
+function stepsAllDone() { $$('#insight .steps li').forEach(li => { li.classList.remove('on'); li.classList.add('done'); }); }
+
+/* ---------- rich card builders ---------- */
+const usagePct = () => Math.round(CUSTOMER.used / CUSTOMER.plan.gb * 100);
+function balanceCard() {
+  const p = usagePct();
+  return `<div class="rc"><div class="rh"><b>MY ACCOUNT</b><span style="font-size:12px">${CUSTOMER.msisdn}</span></div><div class="rb">
+    <div class="kv"><span>Balance</span><b style="color:${CUSTOMER.balance < 1 ? 'var(--red)' : 'var(--green)'}">${ro(CUSTOMER.balance)}</b></div>
+    <div class="kv"><span>Plan</span><b>FlexiBULL ${CUSTOMER.plan.gb}GB · RO ${CUSTOMER.plan.price}</b></div>
+    <div style="padding-top:8px"><span class="muted">Data</span> <b style="float:right">${(CUSTOMER.plan.gb - CUSTOMER.used).toFixed(1)} GB left</b>
+      <div class="bar"><i style="width:${p}%"></i></div><small class="muted">${p}% used · renews ${CUSTOMER.renew} (${CUSTOMER.daysLeft} days)</small></div>
+    <div class="kv" style="margin-top:6px"><span>Local minutes</span><b>112 left</b></div>
+  </div></div>`;
+}
+function successCard(title, sub) {
+  return `<div class="rc"><div class="success"><div class="tick">✓</div><b>${title}</b><div class="muted" style="font-size:13px;margin-top:4px">${sub}</div></div></div>`;
+}
+function qrSvg() {
+  const r = seeded(42), n = 25, c = 6;
+  let cells = '';
+  const finder = (x, y) => `<rect x="${x*c}" y="${y*c}" width="${7*c}" height="${7*c}" fill="#011235"/><rect x="${(x+1)*c}" y="${(y+1)*c}" width="${5*c}" height="${5*c}" fill="#fff"/><rect x="${(x+2)*c}" y="${(y+2)*c}" width="${3*c}" height="${3*c}" fill="#011235"/>`;
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+    const inF = (x < 8 && y < 8) || (x > n - 9 && y < 8) || (x < 8 && y > n - 9);
+    if (!inF && r() > .52) cells += `<rect x="${x*c}" y="${y*c}" width="${c}" height="${c}" fill="#011235"/>`;
+  }
+  return `<svg class="qr" viewBox="0 0 ${n*c} ${n*c}"><rect width="100%" height="100%" fill="#fff"/>${cells}${finder(0,0)}${finder(n-7,0)}${finder(0,n-7)}</svg>`;
+}
+
+const STORES = [
+  { id: 'vm-mcc', name: 'Virgin Megastore', branch: 'Muscat City Centre', city: 'Seeb', region: 'Muscat', lat: 23.6005, lng: 58.2455, hours: '10:00–22:00', open: [10, 22], stock: 42, avg: 6.1, esim: true },
+  { id: 'tl-mom', name: 'Techlink', branch: 'Mall of Muscat', city: 'Al Mawaleh', region: 'Muscat', lat: 23.6170, lng: 58.2380, hours: '10:00–22:00', open: [10, 22], stock: 4, avg: 3.8, esim: true },
+  { id: 'tl-mgm', name: 'Techlink', branch: 'Muscat Grand Mall', city: 'Al Khuwair', region: 'Muscat', lat: 23.5870, lng: 58.3890, hours: '10:00–22:00', open: [10, 22], stock: 9, avg: 5.4, esim: true },
+  { id: 'gd-oam', name: 'Gadgets', branch: 'Oman Avenues Mall', city: 'Al Ghubrah', region: 'Muscat', lat: 23.5835, lng: 58.3930, hours: '10:00–23:00', open: [10, 23], stock: 31, avg: 4.2, esim: true },
+  { id: 'gd-qrm', name: 'Gadgets', branch: 'Qurum City Centre', city: 'Qurum', region: 'Muscat', lat: 23.5960, lng: 58.4560, hours: '10:00–22:00', open: [10, 22], stock: 0, avg: 3.1, esim: false },
+  { id: 'gd-shr', name: 'Gadgets', branch: 'Lulu Sohar', city: 'Sohar', region: 'Al Batinah North', lat: 24.3470, lng: 56.7370, hours: '09:00–23:00', open: [9, 23], stock: 18, avg: 2.1, esim: true },
+  { id: 'tl-nzw', name: 'Techlink', branch: 'Nizwa Grand Mall', city: 'Nizwa', region: 'Ad Dakhiliyah', lat: 22.9060, lng: 57.5300, hours: '10:00–22:00', open: [10, 22], stock: 6, avg: 2.6, esim: true },
+  { id: 'gd-sll', name: 'Gadgets', branch: 'Salalah Gardens Mall', city: 'Salalah', region: 'Dhofar', lat: 17.0040, lng: 54.0930, hours: '10:00–22:00', open: [10, 22], stock: 22, avg: 1.9, esim: true },
+  { id: 'tl-sur', name: 'Techlink', branch: 'Sur Mall', city: 'Sur', region: 'Ash Sharqiyah South', lat: 22.5600, lng: 59.5000, hours: '10:00–22:00', open: [10, 22], stock: 14, avg: 1.4, esim: true },
+];
+const UPLIFT = 1.28; // salary week (25–31 Oct) + National Day run-up
+STORES.forEach(s => {
+  s.fc = +(s.avg * UPLIFT).toFixed(1);
+  s.dts = s.fc ? s.stock / s.fc : 99;
+  s.status = s.stock === 0 ? 'out' : s.dts < 3 ? 'risk' : s.dts < 7 ? 'low' : 'ok';
+  s.reorder = Math.max(0, Math.ceil((s.fc * 14 - s.stock) / 10) * 10);
+});
+function km(a, b) {
+  const R = 6371, dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180;
+  const x = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(x));
+}
+function stockPill(s) {
+  if (s.stock === 0) return '<span class="pill red">Out of stock · eSIM online</span>';
+  if (s.stock < 10) return `<span class="pill amber">Only ${s.stock} SIMs left</span>`;
+  return `<span class="pill green">In stock · ${s.stock} SIMs</span>`;
+}
+const isOpen = s => { const h = 19; return h >= s.open[0] && h < s.open[1]; };
+const statusColor = { ok: '#14a05c', low: '#e8930c', risk: '#db0a40', out: '#7a0624' };
+
+async function flowRechargeAmount() {
+  await bot('How much would you like to add? (500 Bz to RO 10 per transaction, max RO 60 a day)');
+  chips([5, 10, 18, 20].map(a => ({ label: 'RO ' + a, fn: () => flowPay(a, a >= 18) })));
+}
+const scnIs = id => $('#scnlist .scn.active')?.dataset.scn === id;
+async function flowPay(amount, renew) {
+  const lowbal = scnIs('lowbal');
+  if (lowbal) step(3);
+  const split = amount > 10;
+  const parts = split ? [10, amount - 10] : [amount];
+  await card(`<div class="rc"><div class="rh"><b>RECHARGE</b><span>${CUSTOMER.msisdn}</span></div><div class="rb">
+    <div class="kv"><span>Amount</span><b>${ro(amount)}</b></div>
+    ${split ? `<div class="kv"><span>Processed as</span><b>${parts.map(p => ro(p, 0)).join(' + ')}</b></div>` : ''}
+    <div class="kv"><span>Pay with</span><b>Visa •••• 4421</b></div>
+    <div class="kv"><span>New balance</span><b style="color:var(--green)">${ro(CUSTOMER.balance + amount)}</b></div>
+  </div></div>`);
+  if (split) await bot('The limit is RO 10 per transaction, so I\'ll split this into two payments automatically. You only confirm once.', 700);
+  chips([{ label: `Pay ${ro(amount)}`, fn: async () => {
+    await bot('Processing payment… 🔒', 1200);
+    CUSTOMER.balance += amount;
+    if (lowbal) step(4);
+    await card(successCard('Recharge successful', `Balance is now ${ro(CUSTOMER.balance)}.${renew ? ` Your FlexiBULL 52GB will renew automatically on ${CUSTOMER.renew}.` : ''}`), 500);
+    await bot('Anything else I can help with?', 600);
+    stepsAllDone();
+    chips([{ label: 'Check my data', fn: async () => { await card(balanceCard()); } }, { label: 'That\'s all, thanks!', fn: async () => bot('Anytime! Gives you wiiings 🪽') }]);
+  }, primary: true }, { label: 'Use a voucher instead', fn: async () => { await bot('Sure. Send me the 14-digit voucher code from your scratch card.'); } }]);
+}
+
+async function retainOffer(reason) {
+  step(3);
+  const intro = {
+    price: 'Got it, value matters. You\'re one of our long-standing customers, so I can do one of these:',
+    network: 'Sorry about that. I\'ve logged a coverage ticket for <b>Al Khoud, Seeb</b> with our network team (Ref #NW-20418). While they look into it:',
+    offer: 'Thanks for telling me. I\'d like to keep you, so here\'s what I can offer right now:',
+  }[reason];
+  await bot(intro, 1000);
+  await card(`<div class="rc"><div class="rb"><div class="cmp">
+    <div class="rec" style="padding-top:14px"><div class="gb" style="font-size:22px">+10GB</div><small>free every month<br>for 3 months</small></div>
+    <div><div class="gb" style="font-size:22px">RO 2 off</div><small>your plan<br>for 3 months</small></div>
+  </div></div></div>`, 700);
+  chips([
+    { label: 'Take +10GB free', fn: retainSaved, primary: true },
+    { label: 'Take RO 2 off', fn: retainSaved },
+    { label: 'I still want to leave', fn: retainLeave },
+  ]);
+}
+async function retainSaved() {
+  step(4);
+  await card(successCard('Offer applied ✓', 'Active from your next renewal. Thanks for staying with Red Bull Mobile!'), 900);
+  stepsAllDone();
+  toast('Customer saved · result sent to the Ops Agent churn model');
+}
+async function retainLeave() {
+  await bot('Understood, and thanks for being with us. I\'ve passed your request to our team. They\'ll WhatsApp you your porting details within 24h. You can also chat with them now:', 900);
+  await card(`<div class="rc"><div class="rb" style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">💬</span><div><b>WhatsApp support</b><br><small class="muted">+968 7123 1600 · conversation shared</small></div>
+    <a href="https://wa.me/96871231600" target="_blank" style="margin-left:auto;color:var(--wa-dark);font-weight:700;text-decoration:none">Open</a></div></div>`);
+  stepsAllDone();
+}
+
+/* ---------- 5. Self-service ---------- */
+async function scnSelfService() {
+  resetPhone('app');
+  setInsight({
+    eyebrow: 'Account self-service',
+    title: 'One chat for every app feature',
+    trigger: 'Customer opens chat. Ooredoo\'s "Saeed" bot deflects 70%+ of queries, and today Red Bull Mobile has no AI self-service at all.',
+    steps: [
+      'Understands free text in English or Arabic',
+      'Calls existing APIs: balance, e-recharge, plans, eSIM replacement',
+      'Shows answers as cards with one-tap actions',
+      'Hands over to WhatsApp support, with context, only when needed',
+    ],
+    metric: { value: '70%+', label: 'query deflection achieved by competitor chatbot (Ooredoo "Saeed")', source: 'Closes the AI-presence gap. Tracked as: support deflection rate.' },
+    data: ['Balance API', 'eRecharge API', 'FlexiBULL plans API', 'eSIM replacement API', 'Store locator'],
+  });
+  step(0);
+  await bot(`Hi 👋 I'm your Red Bull Mobile assistant. What can I do for you?`, 500);
+  menuChips();
+}
+function menuChips() {
+  chips([
+    { label: 'Check balance', fn: intentBalance },
+    { label: 'Recharge', fn: async () => { step(1); await flowRechargeAmount(); } },
+    { label: 'Change plan', fn: intentPlans },
+    { label: 'Switch to eSIM', fn: intentEsim },
+    { label: 'Find a store', fn: intentStore },
+  ]);
+}
+async function intentBalance() {
+  step(1);
+  await card(balanceCard());
+  step(2);
+  if (CUSTOMER.balance < 1) {
+    await bot('Your balance is too low for your renewal on 24 Oct. Want to recharge now?', 700);
+    chips([{ label: 'Recharge RO 18', fn: () => flowPay(18, true), primary: true }, { label: 'Later', fn: async () => bot('Okay! I\'ll remind you before your renewal.') }]);
+  } else menuChips();
+}
+async function intentPlans() {
+  step(1);
+  await card(`<div class="rc"><div class="rh"><b>FLEXIBULL PLANS</b><span>monthly</span></div><div class="rb">${PLANS.map(p => `
+    <div class="kv"><span>${p.gb} GB ${p === CUSTOMER.plan ? '<span class="pill navy" style="font-size:10px">CURRENT</span>' : ''}</span><b>RO ${p.price}</b></div>`).join('')}</div></div>`);
+  step(2);
+  chips(PLANS.filter(p => p !== CUSTOMER.plan).map(p => ({ label: `Switch to ${p.gb}GB`, fn: async () => {
+    CUSTOMER.plan = p;
+    await card(successCard(`Switched to ${p.gb}GB`, `RO ${p.price}/month from your next renewal (${CUSTOMER.renew})`));
+    stepsAllDone();
+  } })));
+}
+async function intentEsim() {
+  step(1);
+  await bot('Sure! Switching your number to eSIM takes about 2 minutes and costs <b>RO 1.0</b>. Which phone do you have?');
+  chips([{ label: 'iPhone', fn: () => esimOtp('iPhone') }, { label: 'Samsung / Android', fn: () => esimOtp('Android') }]);
+}
+async function esimOtp(device) {
+  await bot(`I've sent a 4-digit code to <b>${CUSTOMER.msisdn}</b> to confirm it's you.`);
+  await card(`<div class="rc"><div class="rb" style="text-align:center"><small class="muted">Enter verification code</small><div class="otp"><span>4</span><span>8</span><span>2</span><span>1</span></div></div></div>`, 500);
+  chips([{ label: 'Verify 4821', fn: async () => {
+    step(2);
+    await bot('Verified ✅ Here\'s your eSIM. I\'ve also emailed it to you.', 900);
+    const steps = device === 'iPhone'
+      ? 'Settings → Mobile Service → Add eSIM → Use QR Code'
+      : 'Settings → Connections → SIM manager → Add eSIM → Scan QR';
+    await card(`<div class="rc"><div class="rh"><b>YOUR eSIM QR CODE</b><span>${device}</span></div><div class="rb" style="text-align:center">${qrSvg()}
+      <small class="muted">${steps}</small><div style="margin-top:6px;font-size:12px">Your physical SIM stops working once the eSIM is active.</div></div></div>`, 700);
+    stepsAllDone();
+  }, primary: true }]);
+}
+
+/* ---------- 6. Store finder ---------- */
+async function scnStore() {
+  resetPhone('web');
+  setInsight({
+    eyebrow: 'Fed by Agent 2 · Distributor',
+    title: 'Find a store, with stock',
+    trigger: 'Today the website\'s store locator returns <b>"No locations available"</b>, which closes off this whole funnel stage.',
+    steps: [
+      'Customer asks where to buy a SIM',
+      'Gets location (with permission) and ranks outlets by distance',
+      'Checks live stock and opening hours from the Distributor Agent',
+      'Offers directions or reserves a SIM for pickup',
+    ],
+    metric: { value: '20–30%', label: 'of sales otherwise lost to dead-end locators recovered by recovery-focused fixes', source: 'BCG 2025 omnichannel · 91% abandon at a dead end (NielsenIQ)' },
+    data: ['Retailer outlet list', 'Live SIM stock per outlet', 'Opening hours', 'Customer location'],
+  });
+  step(0);
+  await bot('Hi! 👋 How can I help?', 400);
+  await sleep(600);
+  user('Where can I buy a Red Bull Mobile SIM near me?');
+  await intentStore();
+}
+async function intentStore() {
+  step(1);
+  await bot('I can find the nearest store with SIMs in stock. Can I use your location?', 800);
+  chips([{ label: '📍 Share my location', fn: async () => {
+    step(2);
+    const near = STORES.map(s => ({ ...s, d: km(CUSTOMER, s) })).sort((a, b) => a.d - b.d).slice(0, 3);
+    await bot(`Here are the closest stores to <b>${CUSTOMER.area}</b>:`, 900);
+    await card(`<div class="rc"><div class="rh"><b>NEAREST STORES</b><span>live stock</span></div>${near.map(s => `
+      <div class="storecard"><div class="dist">${s.d.toFixed(1)}<small>km</small></div>
+      <div><b style="font-size:13.5px">${s.name}</b><br><small class="muted">${s.branch} · ${s.hours}</small><br>${stockPill(s)}</div>
+      <a href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank">Directions ↗</a></div>`).join('')}</div>`, 500);
+    step(3);
+    chips([{ label: `Reserve a SIM at ${near[0].name}`, fn: async () => {
+      await card(successCard('SIM reserved for 24h', `${near[0].name}, ${near[0].branch}. Show code <b>RB-7Q42</b> and your civil ID at the counter.`));
+      stepsAllDone();
+    }, primary: true }, { label: 'Get an eSIM online instead', fn: async () => { await bot('Even quicker! You can order an eSIM on redbullmobile.om and be live in about 5 minutes. No store visit needed.'); stepsAllDone(); } }]);
+  }, primary: true }]);
+}
+
+async function route(t) {
+  const s = t.toLowerCase();
+  const ar = /[؀-ۿ]/.test(t);
+  if (/(esim|e-sim)/.test(s)) return intentEsim();
+  if (/(cancel|port|leave|switch to|another network|ooredoo|vodafone|expensive|quit)/.test(s) || /(إلغاء|نقل الرقم)/.test(t)) {
+    await bot('I\'m sorry to hear that. Before you go, can I ask what\'s not working for you? I may be able to fix it right now.', 900);
+    return chips([{ label: '💸 Too expensive', fn: () => retainOffer('price') }, { label: '📶 Network / coverage', fn: () => retainOffer('network') }, { label: '🏷️ Better offer elsewhere', fn: () => retainOffer('offer') }, { label: 'Just want to leave', fn: retainLeave }]);
+  }
+  if (/(balance|how much|credit|left)/.test(s) || /رصيد/.test(t)) return intentBalance();
+  if (/(recharge|top ?up|topup)/.test(s) || /شحن/.test(t)) return flowRechargeAmount();
+  if (/(store|shop|near|where|buy|location|branch)/.test(s) || /(متجر|فرع)/.test(t)) return intentStore();
+  if (/(upgrade|more data|plan|package|gb|data)/.test(s) || /باقة/.test(t)) return intentPlans();
+  if (/(human|agent|support|call|complain|person)/.test(s)) return retainLeave();
+  if (ar) {
+    await bot('أهلاً وسهلاً! 👋 أنا مساعد ريد بُل موبايل. كيف أقدر أساعدك؟<br><small class="muted">The agent replies in Arabic when the customer writes in Arabic.</small>');
+    return menuChips();
+  }
+  if (/(hi|hello|hey|salam|morning|evening)/.test(s)) { await bot('Hey! 👋 What can I do for you?'); return menuChips(); }
+  if (/(thank|thx|shukran)/.test(s)) return bot('Anytime! Gives you wiiings 🪽');
+  await bot('I can help with your balance, recharges, plans, eSIM or finding a store. Pick one:');
+  menuChips();
+}
+
+
+/* ---------- page wiring ---------- */
+const ASK = ['Check my balance', 'I want to recharge', 'Show me plans with more data', 'Switch my SIM to eSIM', 'Where is the nearest store?', 'I want to switch to another network', 'كم رصيدي؟', 'Talk to a human'];
+
+$('#ask').innerHTML = ASK.map(q => `<button>${esc(q)}</button>`).join('');
+$$('#ask button').forEach(b => b.onclick = () => { $('#chatinput').value = b.textContent; $('#inputbar').requestSubmit(); });
+$('#inputbar').addEventListener('submit', e => {
+  e.preventDefault();
+  const v = $('#chatinput').value.trim();
+  if (!v) return;
+  $('#chatinput').value = '';
+  $$('#feed .chips').forEach(c => c.remove());
+  user(v);
+  run(route, v);
+});
+
+function syncDemo() { $('#d-plan').textContent = `FlexiBULL ${CUSTOMER.plan.gb}GB · RO ${CUSTOMER.plan.price}`; $('#d-bal').textContent = ro(CUSTOMER.balance); }
+new MutationObserver(syncDemo).observe(feed, { childList: true });
+$('#restart').onclick = () => { CUSTOMER.balance = 0.45; CUSTOMER.plan = PLANS[1]; run(scnSelfService); };
+syncDemo();
+run(scnSelfService);
+</script>
+</body>
+</html>
